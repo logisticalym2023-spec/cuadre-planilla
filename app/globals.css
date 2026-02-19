@@ -1,0 +1,156 @@
+@import "tailwindcss";
+
+/* =========================
+   VARIABLES CORPORATIVAS
+========================= */
+
+:root {
+  --background: #f4f7fa;
+  --foreground: #1e293b;
+
+  --primary: #2f6fb2;          /* Azul suave corporativo */
+  --primary-hover: #255b91;
+
+  --green: #2e8b57;            /* Verde botones */
+  --green-hover: #256f45;
+
+  --card: #ffffff;
+  --border: #e2e8f0;
+}
+
+/* =========================
+   BASE
+========================= */
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.app-header {
+  background: linear-gradient(135deg, #2f6fb2, #3c82cc);
+  padding: 20px 40px;
+  color: white;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.app-title {
+  font-size: 22px;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.app-subtitle {
+  font-size: 14px;
+  margin: 3px 0 0 0;
+}
+
+/* =========================
+   CONTENEDOR GENERAL
+========================= */
+
+.page-container {
+  max-width: 950px;
+  margin: 40px auto;
+  padding: 30px;
+}
+
+/* =========================
+   TITULOS GENERALES
+========================= */
+
+h1, h2, h3 {
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* =========================
+   CARDS / RECUADROS
+========================= */
+
+.section-card {
+  background: var(--card);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+  margin-bottom: 25px;
+}
+
+.section-title {
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 15px;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 8px;
+}
+
+/* =========================
+   INPUTS
+========================= */
+
+input[type="number"],
+input[type="text"] {
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  width: 180px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(47,111,178,0.15);
+}
+
+/* =========================
+   BOTONES SISTEMA CUADRE
+========================= */
+
+.btn-primary,
+.btn-secondary {
+  min-width: 180px;
+  padding: 12px 22px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* BOTÓN AVANZAR (VERDE) */
+.btn-primary {
+  background-color: var(--green);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--green-hover);
+  transform: translateY(-2px);
+}
+
+/* BOTÓN REGRESAR (AZUL OPACO CORPORATIVO) */
+.btn-secondary {
+  background-color: var(--primary);
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+}
