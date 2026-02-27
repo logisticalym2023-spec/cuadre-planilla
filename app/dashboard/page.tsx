@@ -17,6 +17,7 @@ export default function DashboardPage() {
   const [usuario, setUsuario] = useState<any>(null)
   const [planillas, setPlanillas] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [fechaFiltro, setFechaFiltro] = useState('')
 
   useEffect(() => {
     const stored = localStorage.getItem('usuario')
@@ -30,7 +31,9 @@ export default function DashboardPage() {
     cargarPlanillas(user)
   }, [])
 
-  const cargarPlanillas = async (user: any) => {
+  const cargarPlanillas = async (user: any, fecha?: string) => {
+    setLoading(true)
+
     let query = supabase
       .from('cuadre_planilla')
       .select(`
@@ -43,10 +46,13 @@ export default function DashboardPage() {
       query = query.eq('personal_id', user.id)
     }
 
+    if (fecha) {
+      query = query.eq('fecha', fecha)
+    }
+
     const { data, error } = await query
 
     if (error) {
-      console.log(error)
       alert('Error cargando planillas')
       setLoading(false)
       return
@@ -58,7 +64,8 @@ export default function DashboardPage() {
 
   const descargarArchivo = (buffer: ArrayBuffer, filename: string) => {
     const blob = new Blob([buffer], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      type:
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -67,183 +74,249 @@ export default function DashboardPage() {
     document.body.appendChild(a)
     a.click()
     a.remove()
-    window.URL.revokeObjectURL(url)
   }
 
-  const exportarExcel = async () => {
-    if (usuario?.rol !== 'admin') return
+  /* EXPORTACIÓN MASIVA ADMIN */
 
-    const cerradas = planillas.filter((p) => p.cerrado)
+  const exportarPlanillasCerradas = async () => {
+    const cerradas = planillas.filter(p => p.cerrado)
 
     if (cerradas.length === 0) {
       alert('No hay planillas cerradas para exportar')
       return
     }
 
-    const ids = cerradas.map((p) => p.id)
-
-    const { data: billetesData, error: errorBilletes } = await supabase
-      .from('cuadre_billetes')
-      .select('*')
-      .in('cuadre_id', ids)
-
-    const { data: monedasData, error: errorMonedas } = await supabase
-      .from('cuadre_monedas')
-      .select('*')
-      .in('cuadre_id', ids)
-
-    if (errorBilletes || errorMonedas) {
-      console.error(errorBilletes || errorMonedas)
-      alert('Error cargando billetes y monedas')
-      return
-    }
-
-    const dataExcel = cerradas.map((p) => {
-      const billetes =
-        billetesData
-          ?.filter((b) => b.cuadre_id === p.id)
-          .map((b) => `${b.denominacion} x ${b.cantidad}`)
-          .join(' | ') || ''
-
-      const monedas =
-        monedasData
-          ?.filter((m) => m.cuadre_id === p.id)
-          .map((m) => `${m.denominacion} x ${m.cantidad}`)
-          .join(' | ') || ''
-
-      return {
-        Empresa: p.empresa,
-        Fecha: p.fecha,
-        Vehiculo: p.vehiculo,
-        Planilla_No: p.planilla_no,
-        Valor_Planilla: Number(p.planilla_valor || 0),
-
-        Monedas: monedas,
-        Billetes: billetes,
-
-        Agotado: Number(p.agotado || 0),
-
-        Dev_Buena: Number(p.dev_paseo || 0),
-        Dev_Mala: Number(p.dev_mala || 0),
-        Consignacion_Brinks: Number(p.consignacion_brinks || 0),
-        Consignacion_Banco: Number(p.consignacion_banco || 0),
-        Redespacho: Number(p.redespacho_manana || 0),
-
-        Peajes: Number(p.peajes || 0),
-        Combustible: Number(p.combustible || 0),
-        Fletes: Number(p.fletes || 0),
-        Acompanamiento: Number(p.acompanamiento || 0),
-        Gasto_Oficina: Number(p.gasto_oficina || 0),
-        Descuento_Clientes: Number(p.descuento_clientes || 0),
-
-        Usuario: p.personal_autorizado?.nombre || '',
-        Codigo_Usuario: p.personal_autorizado?.ultimos_4 || '',
-        Rol: p.personal_autorizado?.rol || '',
-        Estado: 'Cerrada'
-      }
-    })
-
-    const worksheet = XLSX.utils.json_to_sheet(dataExcel)
-    const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Planillas Cerradas')
-
-    worksheet['!cols'] = Object.keys(dataExcel[0] || {}).map(() => ({
-      wch: 20
+    const data = cerradas.map(p => ({
+      Empresa: p.empresa,
+      Fecha: p.fecha,
+      Planilla: p.planilla_no,
+      Valor: p.planilla_valor,
+      Diferencia: p.diferencia_cierre,
+      Usuario: p.personal_autorizado?.nombre
     }))
 
-    const arrayBuffer = XLSX.write(workbook, {
+    const worksheet = XLSX.utils.json_to_sheet(data)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Cerradas')
+
+    const buffer = XLSX.write(workbook, {
       bookType: 'xlsx',
       type: 'array'
     })
 
-    const fecha = new Date().toISOString().slice(0, 10)
-    descargarArchivo(arrayBuffer, `Planillas_Cerradas_${fecha}.xlsx`)
+    descargarArchivo(buffer, 'Planillas_Cerradas.xlsx')
+  }
+
+  /* EXPORTACIÓN INDIVIDUAL */
+
+  const exportarPlanillaIndividual = async (planillaId: string) => {
+    const { data: planilla } = await supabase
+      .from('cuadre_planilla')
+      .select('*')
+      .eq('id', planillaId)
+      .single()
+
+    if (!planilla) return
+
+    const worksheet = XLSX.utils.json_to_sheet([planilla])
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Planilla')
+
+    const buffer = XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'array'
+    })
+
+    descargarArchivo(buffer, `Planilla_${planilla.planilla_no}.xlsx`)
   }
 
   if (loading) return <p>Cargando...</p>
 
-  const totalPlanillas = planillas.length
-  const abiertas = planillas.filter((p) => !p.cerrado).length
-  const cerradas = planillas.filter((p) => p.cerrado).length
   const totalValor = planillas.reduce(
     (acc, p) => acc + Number(p.planilla_valor || 0),
     0
   )
 
+  const totalDiferencias = planillas
+    .filter((p) => p.cerrado)
+    .reduce((acc, p) => acc + Number(p.diferencia_cierre || 0), 0)
+
+  const totalLegalizado = totalValor + totalDiferencias
+
+  const porcentajeLegalizado =
+    totalValor > 0 ? (totalLegalizado / totalValor) * 100 : 0
+
   return (
     <div className="page-container">
       <div className="section-card">
-        <h2 className="section-title">Dashboard de Planillas</h2>
 
-        <div style={{ display: 'flex', gap: 30, marginBottom: 30 }}>
-          <div><strong>Total:</strong> {totalPlanillas}</div>
-          <div><strong>Abiertas:</strong> {abiertas}</div>
-          <div><strong>Cerradas:</strong> {cerradas}</div>
-          <div><strong>Valor Total:</strong> {formatCOP(totalValor)}</div>
-        </div>
-
-        <div style={{ display: 'flex', gap: 15, marginBottom: 20 }}>
-          <button className="btn-primary" onClick={() => router.push('/cuadre')}>
-            + Nueva Planilla
-          </button>
+        {/* HEADER */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 25
+        }}>
+          <h2 className="section-title" style={{ margin: 0 }}>
+            Dashboard de Planillas
+          </h2>
 
           {usuario?.rol === 'admin' && (
-            <button className="btn-secondary" onClick={exportarExcel}>
-              Exportar Planillas Cerradas
+            <button
+              className="btn-secondary"
+              style={{ padding: '10px 18px', fontWeight: 600 }}
+              onClick={exportarPlanillasCerradas}
+            >
+              ⬇ Exportar Cerradas
             </button>
           )}
         </div>
 
+        {/* NUEVA PLANILLA */}
+        <div style={{ marginBottom: 30 }}>
+          <button
+            className="btn-primary"
+            style={{ padding: '12px 22px', fontWeight: 600 }}
+            onClick={() => router.push('/cuadre')}
+          >
+            + Nueva Planilla
+          </button>
+        </div>
+
+        {/* FILTRO ADMIN */}
+        {usuario?.rol === 'admin' && (
+          <div style={{
+            display: 'flex',
+            gap: 12,
+            alignItems: 'center',
+            marginBottom: 35
+          }}>
+            <input
+              type="date"
+              value={fechaFiltro}
+              onChange={(e) => setFechaFiltro(e.target.value)}
+              style={{
+                padding: '8px 12px',
+                borderRadius: 6,
+                border: '1px solid #cbd5e1'
+              }}
+            />
+
+            <button
+              className="btn-primary"
+              style={{ padding: '8px 16px' }}
+              onClick={() => cargarPlanillas(usuario, fechaFiltro)}
+            >
+              Buscar
+            </button>
+
+            <button
+              className="btn-secondary"
+              style={{ padding: '8px 16px' }}
+              onClick={() => {
+                setFechaFiltro('')
+                cargarPlanillas(usuario)
+              }}
+            >
+              Limpiar
+            </button>
+          </div>
+        )}
+
+        {/* KPIs */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: 20,
+          marginBottom: 35
+        }}>
+          <KpiCard title="Total Valor Planillas" value={formatCOP(totalValor)} color="#2563eb" />
+          <KpiCard title="Total Legalizado" value={formatCOP(totalLegalizado)} color="#16a34a" />
+          <KpiCard title="Total Diferencias" value={formatCOP(totalDiferencias)} color={totalDiferencias !== 0 ? "#dc2626" : "#16a34a"} />
+          <KpiCard title="% Legalizado" value={`${porcentajeLegalizado.toFixed(2)} %`} color={porcentajeLegalizado >= 100 ? "#16a34a" : "#f59e0b"} />
+        </div>
+
+        {/* TABLA */}
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-              <th>Empresa</th>
-              <th>Fecha</th>
-              <th>No</th>
-              <th>Valor</th>
-              <th>Estado</th>
-              <th>Usuario</th>
-              <th>Código</th>
-              <th></th>
+              <th style={thStyle}>Empresa</th>
+              <th style={thStyle}>Fecha</th>
+              <th style={thStyle}>No</th>
+              <th style={thStyle}>Valor</th>
+              <th style={thStyle}>Estado</th>
+              <th style={thStyle}>Usuario</th>
+              <th style={{ ...thStyle, textAlign: 'center', width: 110 }}>Ver</th>
+              <th style={{ ...thStyle, textAlign: 'center', width: 130 }}>Exportar</th>
             </tr>
           </thead>
 
           <tbody>
             {planillas.map((p) => (
               <tr key={p.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                <td>{p.empresa}</td>
-                <td>{p.fecha}</td>
-                <td>{p.planilla_no}</td>
-                <td>{formatCOP(p.planilla_valor)}</td>
+                <td style={tdStyle}>{p.empresa}</td>
+                <td style={tdStyle}>{p.fecha}</td>
+                <td style={tdStyle}>{p.planilla_no}</td>
+                <td style={tdStyle}>{formatCOP(p.planilla_valor)}</td>
 
-                <td>
+                <td style={tdStyle}>
                   {p.cerrado ? (
-                    <span style={{ color: '#2e8b57', fontWeight: 600 }}>
-                      Cerrada
-                    </span>
+                    <span style={{ color: '#16a34a', fontWeight: 700 }}>Cerrada</span>
                   ) : (
-                    <span style={{ color: '#dc2626', fontWeight: 600 }}>
-                      Abierta
-                    </span>
+                    <span style={{ color: '#dc2626', fontWeight: 700 }}>Abierta</span>
                   )}
                 </td>
 
-                <td>{p.personal_autorizado?.nombre}</td>
-                <td>{p.personal_autorizado?.ultimos_4}</td>
+                <td style={tdStyle}>{p.personal_autorizado?.nombre}</td>
 
-                <td>
+                {/* VER */}
+                <td style={{ ...tdStyle, textAlign: 'center' }}>
                   <button
                     className="btn-secondary"
+                    style={{ minWidth: 90 }}
                     onClick={() => router.push(`/cuadre/${p.id}/resumen`)}
                   >
                     Ver
                   </button>
                 </td>
+
+                {/* EXPORTAR */}
+                <td style={{ ...tdStyle, textAlign: 'center' }}>
+                  {p.cerrado && (
+                    <button
+                      className="btn-primary"
+                      style={{ minWidth: 110 }}
+                      onClick={() => exportarPlanillaIndividual(p.id)}
+                    >
+                      Exportar
+                    </button>
+                  )}
+                </td>
+
               </tr>
             ))}
           </tbody>
         </table>
+
       </div>
     </div>
   )
 }
+
+function KpiCard({ title, value, color }: any) {
+  return (
+    <div style={{
+      background: '#ffffff',
+      padding: 18,
+      borderRadius: 10,
+      borderLeft: `6px solid ${color}`,
+      boxShadow: '0 2px 6px rgba(0,0,0,0.05)'
+    }}>
+      <div style={{ fontSize: 14, color: '#555' }}>{title}</div>
+      <div style={{ fontSize: 22, fontWeight: 700, color }}>{value}</div>
+    </div>
+  )
+}
+
+const thStyle = { padding: '12px 10px', textAlign: 'left' as const }
+const tdStyle = { padding: '12px 10px' }

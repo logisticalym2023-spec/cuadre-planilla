@@ -16,6 +16,7 @@ type FormKeys =
   | 'acompanamiento'
   | 'gasto_oficina'
   | 'descuento_clientes'
+  | 'vale'
   | 'agotado'
 
 const KEYS: FormKeys[] = [
@@ -30,6 +31,7 @@ const KEYS: FormKeys[] = [
   'acompanamiento',
   'gasto_oficina',
   'descuento_clientes',
+  'vale',
   'agotado'
 ]
 
@@ -44,9 +46,10 @@ type InputProps = {
   label: string
   value: number
   onChange: (value: number) => void
+  disabled?: boolean
 }
 
-const InputRow = ({ label, value, onChange }: InputProps) => {
+const InputRow = ({ label, value, onChange, disabled }: InputProps) => {
   const formatVisual = (n: number) =>
     new Intl.NumberFormat('es-CO').format(n || 0)
 
@@ -72,6 +75,7 @@ const InputRow = ({ label, value, onChange }: InputProps) => {
         <input
           type="text"
           inputMode="numeric"
+          disabled={disabled}
           value={value === 0 ? '' : formatVisual(value)}
           onChange={(e) => {
             const numero =
@@ -97,6 +101,7 @@ export default function NovedadesPage() {
   const [planilla, setPlanilla] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [esAdmin, setEsAdmin] = useState(false)
 
   const [form, setForm] = useState<Record<FormKeys, number>>({
     dev_paseo: 0,
@@ -110,12 +115,25 @@ export default function NovedadesPage() {
     acompanamiento: 0,
     gasto_oficina: 0,
     descuento_clientes: 0,
+    vale: 0,
     agotado: 0
   })
 
   useEffect(() => {
-    if (id) cargarDatos()
+    if (id) {
+      verificarRol()
+      cargarDatos()
+    }
   }, [id])
+
+  const verificarRol = () => {
+    const usuarioGuardado = localStorage.getItem('usuario')
+    const usuario = usuarioGuardado ? JSON.parse(usuarioGuardado) : null
+
+    if (usuario?.rol === 'admin') {
+      setEsAdmin(true)
+    }
+  }
 
   const cargarDatos = async () => {
     const { data } = await supabase
@@ -140,7 +158,6 @@ export default function NovedadesPage() {
 
   const handleChange = (campo: FormKeys, numero: number) => {
 
-    // 🔒 Validación: agotado no puede ser mayor que planilla
     if (campo === 'agotado') {
       const valorPlanilla = Number(planilla?.planilla_valor || 0)
 
@@ -158,11 +175,17 @@ export default function NovedadesPage() {
 
   const totalNovedades = useMemo(() => {
     return KEYS
-      .filter(key => key !== 'agotado') // agotado NO suma al total legalizado
+      .filter(key => key !== 'agotado')
       .reduce((acc, key) => acc + form[key], 0)
   }, [form])
 
   const guardarYContinuar = async () => {
+
+    if (planilla.cerrado && !esAdmin) {
+      alert('Esta planilla está cerrada y no puede modificarse')
+      return
+    }
+
     setSaving(true)
 
     const { error } = await supabase
@@ -182,11 +205,19 @@ export default function NovedadesPage() {
   if (loading) return <p>Cargando...</p>
   if (!planilla) return <p>No se encontró la planilla</p>
 
+  const estaCerrada = planilla.cerrado && !esAdmin
+
   return (
     <div className="page-container">
       <div className="section-card">
 
         <h2 className="section-title">Novedades y Gastos</h2>
+
+        {estaCerrada && (
+          <p className="text-red-600 font-bold">
+            PLANILLA CERRADA - SOLO ADMIN PUEDE MODIFICAR
+          </p>
+        )}
 
         <p><strong>Empresa:</strong> {planilla.empresa}</p>
         <p><strong>Fecha:</strong> {planilla.fecha}</p>
@@ -196,24 +227,15 @@ export default function NovedadesPage() {
 
         <hr />
 
-        <InputRow label="Devolución Buena" value={form.dev_paseo} onChange={(v) => handleChange('dev_paseo', v)} />
-        <InputRow label="Devolución Mala" value={form.dev_mala} onChange={(v) => handleChange('dev_mala', v)} />
-        <InputRow label="Consignación Brinks" value={form.consignacion_brinks} onChange={(v) => handleChange('consignacion_brinks', v)} />
-        <InputRow label="Consignación Banco" value={form.consignacion_banco} onChange={(v) => handleChange('consignacion_banco', v)} />
-        <InputRow label="Redespacho Mañana" value={form.redespacho_manana} onChange={(v) => handleChange('redespacho_manana', v)} />
-
-        <hr />
-
-        <InputRow label="Peajes" value={form.peajes} onChange={(v) => handleChange('peajes', v)} />
-        <InputRow label="Combustible" value={form.combustible} onChange={(v) => handleChange('combustible', v)} />
-        <InputRow label="Fletes" value={form.fletes} onChange={(v) => handleChange('fletes', v)} />
-        <InputRow label="Acompañamiento" value={form.acompanamiento} onChange={(v) => handleChange('acompanamiento', v)} />
-        <InputRow label="Gasto Oficina" value={form.gasto_oficina} onChange={(v) => handleChange('gasto_oficina', v)} />
-        <InputRow label="Descuento Clientes" value={form.descuento_clientes} onChange={(v) => handleChange('descuento_clientes', v)} />
-
-        <hr />
-
-        <InputRow label="Agotado" value={form.agotado} onChange={(v) => handleChange('agotado', v)} />
+        {KEYS.map((key) => (
+          <InputRow
+            key={key}
+            label={key.replace('_', ' ').toUpperCase()}
+            value={form[key]}
+            onChange={(v) => handleChange(key, v)}
+            disabled={estaCerrada}
+          />
+        ))}
 
         <hr />
 
@@ -231,13 +253,15 @@ export default function NovedadesPage() {
             ← Volver
           </button>
 
-          <button
-            className="btn-primary"
-            onClick={guardarYContinuar}
-            disabled={saving}
-          >
-            {saving ? 'Guardando...' : 'Guardar y Continuar →'}
-          </button>
+          {!estaCerrada && (
+            <button
+              className="btn-primary"
+              onClick={guardarYContinuar}
+              disabled={saving}
+            >
+              {saving ? 'Guardando...' : 'Guardar y Continuar →'}
+            </button>
+          )}
         </div>
 
       </div>

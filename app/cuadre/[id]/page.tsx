@@ -21,13 +21,24 @@ export default function MonedasPage() {
   const [planilla, setPlanilla] = useState<any>(null)
   const [cantidades, setCantidades] = useState<Record<number, string>>({})
   const [monedasRegistradas, setMonedasRegistradas] = useState<any[]>([])
+  const [esAdmin, setEsAdmin] = useState(false)
 
   useEffect(() => {
     if (id) {
+      verificarRol()
       cargarPlanilla()
       cargarMonedas()
     }
   }, [id])
+
+  const verificarRol = () => {
+    const usuarioGuardado = localStorage.getItem('usuario')
+    const usuario = usuarioGuardado ? JSON.parse(usuarioGuardado) : null
+
+    if (usuario?.rol === 'admin') {
+      setEsAdmin(true)
+    }
+  }
 
   const cargarPlanilla = async () => {
     const { data } = await supabase
@@ -39,7 +50,6 @@ export default function MonedasPage() {
     setPlanilla(data)
   }
 
-  // ✅ AHORA CARGA DESDE cuadre_monedas
   const cargarMonedas = async () => {
     const { data } = await supabase
       .from('cuadre_monedas')
@@ -49,8 +59,14 @@ export default function MonedasPage() {
     setMonedasRegistradas(data || [])
   }
 
-  // ✅ AHORA GUARDA EN cuadre_monedas
   const guardarMonedas = async () => {
+
+    // 🔒 BLOQUEO SI ESTÁ CERRADA Y NO ES ADMIN
+    if (planilla.cerrado && !esAdmin) {
+      alert('Esta planilla está cerrada y no puede modificarse')
+      return
+    }
+
     const registros = []
 
     for (const denom of monedas) {
@@ -87,11 +103,19 @@ export default function MonedasPage() {
 
   if (!planilla) return <p>Cargando...</p>
 
+  const estaCerrada = planilla.cerrado && !esAdmin
+
   return (
     <div className="page-container">
       <div className="section-card">
 
         <h2 className="section-title">Registro de Monedas</h2>
+
+        {estaCerrada && (
+          <p className="text-red-600 font-bold">
+            PLANILLA CERRADA - SOLO ADMIN PUEDE MODIFICAR
+          </p>
+        )}
 
         <p><strong>Empresa:</strong> {planilla.empresa}</p>
         <p><strong>Planilla No:</strong> {planilla.planilla_no}</p>
@@ -105,6 +129,7 @@ export default function MonedasPage() {
               <input
                 type="number"
                 min="0"
+                disabled={estaCerrada}
                 value={cantidades[denom] || ''}
                 onChange={(e) =>
                   setCantidades({
@@ -119,12 +144,14 @@ export default function MonedasPage() {
 
         <br />
 
-        <button
-          className="btn-primary"
-          onClick={guardarMonedas}
-        >
-          Guardar Monedas
-        </button>
+        {!estaCerrada && (
+          <button
+            className="btn-primary"
+            onClick={guardarMonedas}
+          >
+            Guardar Monedas
+          </button>
+        )}
 
         <hr />
 

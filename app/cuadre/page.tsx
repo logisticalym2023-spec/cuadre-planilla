@@ -15,7 +15,7 @@ export default function CuadrePage() {
 
   const [empresa, setEmpresa] = useState('')
   const hoy = new Date().toISOString().split('T')[0]
-const [fecha, setFecha] = useState(hoy)
+  const [fecha, setFecha] = useState(hoy)
   const [vehiculo, setVehiculo] = useState('')
   const [planillaNo, setPlanillaNo] = useState('')
   const [planillaValor, setPlanillaValor] = useState<number>(0)
@@ -31,6 +31,26 @@ const [fecha, setFecha] = useState(hoy)
     setUser(JSON.parse(storedUser))
     setLoading(false)
   }, [])
+
+  // 🔥 NUEVA FUNCIÓN: Buscar planilla oficial
+  const buscarPlanillaOficial = async (numero: string) => {
+    if (!numero || !fecha) return
+
+    const { data, error } = await supabase
+      .from('planillas_oficiales')
+      .select('valor')
+      .eq('fecha', fecha) // importante: formato YYYY-MM-DD
+      .eq('planilla_no', numero)
+      .single()
+
+    if (error || !data) {
+      alert('Esta planilla no existe en oficiales para esta fecha')
+      setPlanillaValor(0)
+      return
+    }
+
+    setPlanillaValor(Number(data.valor))
+  }
 
   const crearPlanilla = async () => {
     if (!empresa || !fecha || !vehiculo || !planillaNo || !planillaValor) {
@@ -102,7 +122,10 @@ const [fecha, setFecha] = useState(hoy)
             <input
               type="date"
               value={fecha}
-              onChange={(e) => setFecha(e.target.value)}
+              onChange={(e) => {
+                setFecha(e.target.value)
+                setPlanillaValor(0) // reset si cambia fecha
+              }}
               style={{ width: '100%', marginTop: 6 }}
             />
           </div>
@@ -126,7 +149,8 @@ const [fecha, setFecha] = useState(hoy)
             <input
               value={planillaNo}
               onChange={(e) => setPlanillaNo(e.target.value)}
-              placeholder="Ej: 001"
+              onBlur={(e) => buscarPlanillaOficial(e.target.value)}
+              placeholder="Ej: 1001"
               style={{ width: '100%', marginTop: 6 }}
             />
           </div>
@@ -151,15 +175,12 @@ const [fecha, setFecha] = useState(hoy)
                 type="text"
                 inputMode="numeric"
                 value={planillaValor === 0 ? '' : formatVisual(planillaValor)}
-                onChange={(e) => {
-                  const numero =
-                    Number(e.target.value.replace(/[^\d]/g, '')) || 0
-                  setPlanillaValor(numero)
-                }}
+                readOnly // 🔥 ahora es automático
                 style={{
                   width: '100%',
                   paddingLeft: 28,
-                  textAlign: 'right'
+                  textAlign: 'right',
+                  backgroundColor: '#f3f4f6'
                 }}
                 placeholder="0"
               />

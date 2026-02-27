@@ -14,13 +14,24 @@ export default function BilletesPage() {
   const [planilla, setPlanilla] = useState<any>(null)
   const [cantidades, setCantidades] = useState<Record<number, string>>({})
   const [billetesRegistrados, setBilletesRegistrados] = useState<any[]>([])
+  const [esAdmin, setEsAdmin] = useState(false)
 
   useEffect(() => {
     if (id) {
+      verificarRol()
       cargarPlanilla()
       cargarBilletes()
     }
   }, [id])
+
+  const verificarRol = () => {
+    const usuarioGuardado = localStorage.getItem('usuario')
+    const usuario = usuarioGuardado ? JSON.parse(usuarioGuardado) : null
+
+    if (usuario?.rol === 'admin') {
+      setEsAdmin(true)
+    }
+  }
 
   const cargarPlanilla = async () => {
     const { data } = await supabase
@@ -42,6 +53,13 @@ export default function BilletesPage() {
   }
 
   const guardarBilletes = async () => {
+
+    // 🔒 BLOQUEO SI ESTÁ CERRADA Y NO ES ADMIN
+    if (planilla.cerrado && !esAdmin) {
+      alert('Esta planilla está cerrada y no puede modificarse')
+      return
+    }
+
     const registros: any[] = []
 
     for (const denom of billetes) {
@@ -56,7 +74,6 @@ export default function BilletesPage() {
       }
     }
 
-    // Si no hay billetes, simplemente seguimos
     if (registros.length > 0) {
       const { error } = await supabase
         .from('cuadre_billetes')
@@ -71,8 +88,6 @@ export default function BilletesPage() {
 
     setCantidades({})
     await cargarBilletes()
-
-    // 🔥 IMPORTANTE: NO redirige automáticamente
   }
 
   const totalEfectivo = billetesRegistrados.reduce(
@@ -82,9 +97,17 @@ export default function BilletesPage() {
 
   if (!planilla) return <p>Cargando...</p>
 
+  const estaCerrada = planilla.cerrado && !esAdmin
+
   return (
     <div className="page-container">
       <h2>REGISTRO DE BILLETES</h2>
+
+      {estaCerrada && (
+        <p className="text-red-600 font-bold">
+          PLANILLA CERRADA - SOLO ADMIN PUEDE MODIFICAR
+        </p>
+      )}
 
       <p><strong>Empresa:</strong> {planilla.empresa}</p>
       <p><strong>Planilla No:</strong> {planilla.planilla_no}</p>
@@ -99,6 +122,7 @@ export default function BilletesPage() {
           <input
             type="number"
             min="0"
+            disabled={estaCerrada}
             value={cantidades[denom] || ''}
             onChange={(e) =>
               setCantidades({
@@ -112,9 +136,11 @@ export default function BilletesPage() {
 
       <br />
 
-      <button className="btn-primary" onClick={guardarBilletes}>
-        Guardar Billetes
-      </button>
+      {!estaCerrada && (
+        <button className="btn-primary" onClick={guardarBilletes}>
+          Guardar Billetes
+        </button>
+      )}
 
       <hr />
 
@@ -132,7 +158,6 @@ export default function BilletesPage() {
 
       <hr />
 
-      {/* Volver a Monedas */}
       <button
         className="btn-secondary"
         onClick={() => router.push(`/cuadre/${id}`)}
@@ -142,7 +167,6 @@ export default function BilletesPage() {
 
       <br /><br />
 
-      {/* Ir a Novedades */}
       <button
         className="btn-primary"
         onClick={() => router.push(`/cuadre/${id}/novedades`)}
