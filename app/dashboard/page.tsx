@@ -135,7 +135,6 @@ export default function DashboardPage() {
 
     const dataExcel: any[] = []
 
-    // DATOS GENERALES
     dataExcel.push({ Campo: 'Empresa', Valor: planilla.empresa })
     dataExcel.push({ Campo: 'Fecha', Valor: planilla.fecha })
     dataExcel.push({ Campo: 'Vehículo', Valor: planilla.vehiculo })
@@ -146,7 +145,6 @@ export default function DashboardPage() {
     dataExcel.push({ Campo: 'Agotado', Valor: Number(planilla.agotado || 0) })
     dataExcel.push({ Campo: '', Valor: '' })
 
-    // RUBROS
     dataExcel.push({ Campo: 'Dev Buena', Valor: Number(planilla.dev_paseo || 0) })
     dataExcel.push({ Campo: 'Dev Mala', Valor: Number(planilla.dev_mala || 0) })
     dataExcel.push({ Campo: 'Consignación Brinks', Valor: Number(planilla.consignacion_brinks || 0) })
@@ -161,9 +159,7 @@ export default function DashboardPage() {
     dataExcel.push({ Campo: 'Vale', Valor: Number(planilla.vale || 0) })
     dataExcel.push({ Campo: '', Valor: '' })
 
-    // DETALLE BILLETES
     dataExcel.push({ Campo: '--- DETALLE BILLETES ---', Valor: '' })
-
     ;(billetes || []).forEach((b: any) => {
       dataExcel.push({
         Campo: `Billete ${b.denominacion}`,
@@ -173,9 +169,7 @@ export default function DashboardPage() {
 
     dataExcel.push({ Campo: '', Valor: '' })
 
-    // DETALLE MONEDAS
     dataExcel.push({ Campo: '--- DETALLE MONEDAS ---', Valor: '' })
-
     ;(monedas || []).forEach((m: any) => {
       dataExcel.push({
         Campo: `Moneda ${m.denominacion}`,
@@ -231,7 +225,6 @@ export default function DashboardPage() {
 
         <h2 className="section-title">Dashboard de Planillas</h2>
 
-        {/* FILTRO */}
         {usuario?.rol === 'admin' && (
           <div style={{ display: 'flex', gap: 12, marginBottom: 30 }}>
             <input
@@ -239,37 +232,20 @@ export default function DashboardPage() {
               value={fechaFiltro}
               onChange={(e) => setFechaFiltro(e.target.value)}
             />
-            <button
-              className="btn-primary"
-              onClick={() => cargarPlanillas(usuario, fechaFiltro)}
-            >
+            <button className="btn-primary" onClick={() => cargarPlanillas(usuario, fechaFiltro)}>
               Buscar
             </button>
-            <button
-              className="btn-secondary"
-              onClick={() => {
-                setFechaFiltro('')
-                cargarPlanillas(usuario)
-              }}
-            >
+            <button className="btn-secondary" onClick={() => { setFechaFiltro(''); cargarPlanillas(usuario) }}>
               Limpiar
             </button>
-            <button
-              className="btn-secondary"
-              onClick={exportarPlanillasCerradas}
-            >
+            <button className="btn-secondary" onClick={exportarPlanillasCerradas}>
               ⬇ Exportar Cerradas
             </button>
           </div>
         )}
 
         {/* KPIs */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: 20,
-          marginBottom: 35
-        }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20, marginBottom: 35 }}>
           <KpiCard title="Total Valor Planillas" value={formatCOP(totalValor)} color="#2563eb" />
           <KpiCard title="Total Legalizado" value={formatCOP(totalLegalizado)} color="#16a34a" />
           <KpiCard title="Total Diferencias" value={formatCOP(totalDiferencias)} color={totalDiferencias !== 0 ? "#dc2626" : "#16a34a"} />
@@ -286,7 +262,7 @@ export default function DashboardPage() {
               <th style={thStyle}>Valor</th>
               <th style={thStyle}>Estado</th>
               <th style={thStyle}>Usuario</th>
-              <th style={thStyle}></th>
+              <th style={{ ...thStyle, textAlign: 'right' }}>Acciones</th>
             </tr>
           </thead>
 
@@ -305,23 +281,29 @@ export default function DashboardPage() {
                   )}
                 </td>
                 <td style={tdStyle}>{p.personal_autorizado?.nombre}</td>
-                <td style={tdStyle}>
-                  <button
-                    className="btn-secondary"
-                    onClick={() => router.push(`/cuadre/${p.id}/resumen`)}
-                  >
-                    Ver
-                  </button>
-                  {p.cerrado && (
+
+                <td style={{ ...tdStyle, textAlign: 'right' }}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
                     <button
-                      className="btn-primary"
-                      style={{ marginLeft: 10 }}
-                      onClick={() => exportarPlanillaIndividual(p.id)}
+                      className="btn-secondary"
+                      style={{ minWidth: 90 }}
+                      onClick={() => router.push(`/cuadre/${p.id}/resumen`)}
                     >
-                      Exportar
+                      Ver
                     </button>
-                  )}
+
+                    {p.cerrado && (
+                      <button
+                        className="btn-primary"
+                        style={{ minWidth: 110 }}
+                        onClick={() => exportarPlanillaIndividual(p.id)}
+                      >
+                        Exportar
+                      </button>
+                    )}
+                  </div>
                 </td>
+
               </tr>
             ))}
           </tbody>
