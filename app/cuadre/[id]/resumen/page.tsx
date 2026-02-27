@@ -93,80 +93,6 @@ export default function ResumenPage() {
   const puedeCerrar =
     diferencia >= -tolerancia && diferencia <= tolerancia
 
-  const exportarExcel = () => {
-    const data: any[] = []
-
-    data.push({ Campo: 'Empresa', Valor: planilla.empresa })
-    data.push({ Campo: 'Vehículo', Valor: planilla.vehiculo })
-    data.push({ Campo: 'Planilla No', Valor: planilla.planilla_no })
-    data.push({ Campo: 'Fecha', Valor: planilla.fecha })
-    data.push({ Campo: '', Valor: '' })
-
-    data.push({ Campo: 'Valor Planilla', Valor: planillaValor })
-    data.push({ Campo: 'Agotado', Valor: agotado })
-    data.push({ Campo: 'Planilla Ajustada', Valor: planillaAjustada })
-    data.push({ Campo: '', Valor: '' })
-
-    data.push({ Campo: 'Total Efectivo', Valor: totalEfectivo })
-    data.push({ Campo: '', Valor: '' })
-    data.push({ Campo: 'DETALLE BILLETES', Valor: '' })
-
-    billetesDetalle.forEach((b) => {
-      data.push({
-        Campo: `Billete ${b.denominacion} x ${b.cantidad}`,
-        Valor: b.total
-      })
-    })
-
-    data.push({ Campo: '', Valor: '' })
-    data.push({ Campo: 'DETALLE MONEDAS', Valor: '' })
-
-    monedasDetalle.forEach((m) => {
-      data.push({
-        Campo: `Moneda ${m.denominacion} x ${m.cantidad}`,
-        Valor: m.total
-      })
-    })
-
-    data.push({ Campo: '', Valor: '' })
-    data.push({ Campo: 'NOVEDADES', Valor: '' })
-
-    data.push({ Campo: 'Dev Buena', Valor: Number(planilla.dev_paseo || 0) })
-    data.push({ Campo: 'Dev Mala', Valor: Number(planilla.dev_mala || 0) })
-    data.push({ Campo: 'Brinks', Valor: Number(planilla.consignacion_brinks || 0) })
-    data.push({ Campo: 'Banco', Valor: Number(planilla.consignacion_banco || 0) })
-    data.push({ Campo: 'Redespacho', Valor: Number(planilla.redespacho_manana || 0) })
-    data.push({ Campo: 'Peajes', Valor: Number(planilla.peajes || 0) })
-    data.push({ Campo: 'Combustible', Valor: Number(planilla.combustible || 0) })
-    data.push({ Campo: 'Fletes', Valor: Number(planilla.fletes || 0) })
-    data.push({ Campo: 'Acompañamiento', Valor: Number(planilla.acompanamiento || 0) })
-    data.push({ Campo: 'Gasto Oficina', Valor: Number(planilla.gasto_oficina || 0) })
-    data.push({ Campo: 'Descuento Clientes', Valor: Number(planilla.descuento_clientes || 0) })
-    data.push({ Campo: 'Vale', Valor: Number(planilla.vale || 0) })
-    data.push({ Campo: '', Valor: '' })
-
-    data.push({ Campo: 'TOTAL LEGALIZADO', Valor: totalLegalizado })
-    data.push({ Campo: 'DIFERENCIA', Valor: diferencia })
-    data.push({ Campo: 'Cierre con Tolerancia', Valor: diferencia !== 0 ? 'SI' : 'NO' })
-
-    const worksheet = XLSX.utils.json_to_sheet(data)
-    worksheet['!cols'] = [{ wch: 30 }, { wch: 20 }]
-
-    const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Resumen')
-
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: 'xlsx',
-      type: 'array'
-    })
-
-    const file = new Blob([excelBuffer], {
-      type: 'application/octet-stream'
-    })
-
-    saveAs(file, `Planilla_${planilla.planilla_no}.xlsx`)
-  }
-
   const cerrarYExportar = async () => {
     const cierreConTolerancia = diferencia !== 0
 
@@ -184,7 +110,6 @@ export default function ResumenPage() {
       return
     }
 
-    exportarExcel()
     router.push('/')
   }
 
@@ -223,6 +148,24 @@ export default function ResumenPage() {
             </p>
           ))}
         </div>
+
+        <hr />
+
+        {/* 🔥 BLOQUE NUEVO — SOLO VISUAL */}
+        <h4>Novedades</h4>
+
+        <p>Dev Buena: {formatCOP(planilla.dev_paseo)}</p>
+        <p>Dev Mala: {formatCOP(planilla.dev_mala)}</p>
+        <p>Brinks: {formatCOP(planilla.consignacion_brinks)}</p>
+        <p>Banco: {formatCOP(planilla.consignacion_banco)}</p>
+        <p>Redespacho: {formatCOP(planilla.redespacho_manana)}</p>
+        <p>Peajes: {formatCOP(planilla.peajes)}</p>
+        <p>Combustible: {formatCOP(planilla.combustible)}</p>
+        <p>Fletes: {formatCOP(planilla.fletes)}</p>
+        <p>Acompañamiento: {formatCOP(planilla.acompanamiento)}</p>
+        <p>Gasto Oficina: {formatCOP(planilla.gasto_oficina)}</p>
+        <p>Descuento Clientes: {formatCOP(planilla.descuento_clientes)}</p>
+        <p>Vale: {formatCOP(planilla.vale)}</p>
 
         <hr />
 

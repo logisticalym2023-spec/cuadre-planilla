@@ -154,3 +154,113 @@ input:focus {
   background-color: var(--primary-hover);
   transform: translateY(-2px);
 }
+/* ===============================
+   DASHBOARD ESTÉTICA PROFESIONAL
+=================================*/
+
+.page-container {
+  padding: 40px;
+  background: #f4f6f9;
+  min-height: 100vh;
+}
+
+.section-card {
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+}
+
+.section-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 25px;
+}
+
+/* BOTONES */
+
+button {
+  cursor: pointer;
+  border: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: #16a34a;
+  color: white;
+  padding: 10px 18px;
+  border-radius: 8px;
+}
+
+.btn-primary:hover {
+  background: #15803d;
+}
+
+.btn-secondary {
+  background: #2563eb;
+  color: white;
+  padding: 10px 18px;
+  border-radius: 8px;
+}
+
+.btn-secondary:hover {
+  background: #1d4ed8;
+}
+
+/* INPUT DATE */
+
+input[type="date"] {
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+}
+
+/* KPI CARDS */
+
+.section-card > div[style*="grid"] > div {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.section-card > div[style*="grid"] > div:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+/* TABLA */
+
+table {
+  background: #ffffff;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+thead {
+  background: #f1f5f9;
+}
+
+th {
+  padding: 14px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+td {
+  padding: 14px;
+  font-size: 14px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+tbody tr:hover {
+  background: #f9fafb;
+}
+
+/* ESTADOS */
+
+td span {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
