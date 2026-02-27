@@ -64,8 +64,7 @@ export default function DashboardPage() {
 
   const descargarArchivo = (buffer: ArrayBuffer, filename: string) => {
     const blob = new Blob([buffer], {
-      type:
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -114,7 +113,6 @@ export default function DashboardPage() {
   ============================ */
 
   const exportarPlanillaIndividual = async (planillaId: string) => {
-
     const { data: planilla } = await supabase
       .from('cuadre_planilla')
       .select('*')
@@ -135,6 +133,7 @@ export default function DashboardPage() {
 
     const dataExcel: any[] = []
 
+    // DATOS GENERALES
     dataExcel.push({ Campo: 'Empresa', Valor: planilla.empresa })
     dataExcel.push({ Campo: 'Fecha', Valor: planilla.fecha })
     dataExcel.push({ Campo: 'Vehículo', Valor: planilla.vehiculo })
@@ -145,6 +144,7 @@ export default function DashboardPage() {
     dataExcel.push({ Campo: 'Agotado', Valor: Number(planilla.agotado || 0) })
     dataExcel.push({ Campo: '', Valor: '' })
 
+    // RUBROS
     dataExcel.push({ Campo: 'Dev Buena', Valor: Number(planilla.dev_paseo || 0) })
     dataExcel.push({ Campo: 'Dev Mala', Valor: Number(planilla.dev_mala || 0) })
     dataExcel.push({ Campo: 'Consignación Brinks', Valor: Number(planilla.consignacion_brinks || 0) })
@@ -159,6 +159,7 @@ export default function DashboardPage() {
     dataExcel.push({ Campo: 'Vale', Valor: Number(planilla.vale || 0) })
     dataExcel.push({ Campo: '', Valor: '' })
 
+    // BILLETES
     dataExcel.push({ Campo: '--- DETALLE BILLETES ---', Valor: '' })
     ;(billetes || []).forEach((b: any) => {
       dataExcel.push({
@@ -169,6 +170,7 @@ export default function DashboardPage() {
 
     dataExcel.push({ Campo: '', Valor: '' })
 
+    // MONEDAS
     dataExcel.push({ Campo: '--- DETALLE MONEDAS ---', Valor: '' })
     ;(monedas || []).forEach((m: any) => {
       dataExcel.push({
@@ -205,10 +207,7 @@ export default function DashboardPage() {
 
   if (loading) return <p>Cargando...</p>
 
-  const totalValor = planillas.reduce(
-    (acc, p) => acc + Number(p.planilla_valor || 0),
-    0
-  )
+  const totalValor = planillas.reduce((acc, p) => acc + Number(p.planilla_valor || 0), 0)
 
   const totalDiferencias = planillas
     .filter((p) => p.cerrado)
@@ -225,6 +224,18 @@ export default function DashboardPage() {
 
         <h2 className="section-title">Dashboard de Planillas</h2>
 
+        {/* BOTÓN NUEVA PLANILLA */}
+        <div style={{ marginBottom: 25 }}>
+          <button
+            className="btn-primary"
+            style={{ padding: '12px 22px', fontWeight: 600 }}
+            onClick={() => router.push('/cuadre')}
+          >
+            + Nueva Planilla
+          </button>
+        </div>
+
+        {/* FILTRO ADMIN */}
         {usuario?.rol === 'admin' && (
           <div style={{ display: 'flex', gap: 12, marginBottom: 30 }}>
             <input
