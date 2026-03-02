@@ -125,6 +125,7 @@ export default function DashboardPage() {
       Number(p.acompanamiento || 0) +
       Number(p.gasto_oficina || 0) +
       Number(p.descuento_clientes || 0) +
+      Number(p.almuerzo || 0) +
       Number(p.vale || 0)
 
     dataFinal.push({
@@ -148,6 +149,7 @@ export default function DashboardPage() {
       "Acompañamiento": Number(p.acompanamiento || 0),
       "Gasto Oficina": Number(p.gasto_oficina || 0),
       "Descuento Clientes": Number(p.descuento_clientes || 0),
+      "Almuerzo": Number(p.almuerzo || 0),
       "Vale": Number(p.vale || 0),
       "TOTAL LEGALIZADO": totalLegalizado,
       "DIFERENCIA": Number(p.diferencia_cierre || 0)
@@ -215,6 +217,7 @@ export default function DashboardPage() {
       Number(planilla.acompanamiento || 0) +
       Number(planilla.gasto_oficina || 0) +
       Number(planilla.descuento_clientes || 0) +
+      Number(planilla.almuerzo) +
       vale
 
     const diferencia = totalLegalizado - planillaAjustada
@@ -266,6 +269,7 @@ export default function DashboardPage() {
     dataExcel.push({ Campo: 'Acompañamiento', Valor: Number(planilla.acompanamiento || 0) })
     dataExcel.push({ Campo: 'Gasto Oficina', Valor: Number(planilla.gasto_oficina || 0) })
     dataExcel.push({ Campo: 'Descuento Clientes', Valor: Number(planilla.descuento_clientes || 0) })
+    dataExcel.push({ Campo: 'Almuerzo', Valor: Number(planilla.almuerzo || 0) })
     dataExcel.push({ Campo: 'Vale', Valor: Number(planilla.vale || 0) })
 
     dataExcel.push({ Campo: '', Valor: '' })

@@ -16,6 +16,7 @@ type FormKeys =
   | 'acompanamiento'
   | 'gasto_oficina'
   | 'descuento_clientes'
+  | 'almuerzo'        // 👈 AGREGADO
   | 'vale'
   | 'agotado'
 
@@ -31,6 +32,7 @@ const KEYS: FormKeys[] = [
   'acompanamiento',
   'gasto_oficina',
   'descuento_clientes',
+  'almuerzo',         // 👈 AGREGADO
   'vale',
   'agotado'
 ]
@@ -115,8 +117,9 @@ export default function NovedadesPage() {
     acompanamiento: 0,
     gasto_oficina: 0,
     descuento_clientes: 0,
+    almuerzo: 0,        // 👈 AGREGADO
     vale: 0,
-    agotado: 0
+    agotado: 0,
   })
 
   useEffect(() => {
