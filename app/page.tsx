@@ -39,17 +39,56 @@ export default function LoginPage() {
     <div className="page-container">
       <div className="section-card" style={{ maxWidth: 400, margin: '0 auto' }}>
         
-        <h2 className="section-title">Ingreso al Sistema</h2>
+        <div style={{ textAlign: 'center', marginBottom: 25 }}>
+          <h2 className="section-title" style={{ marginBottom: 10 }}>
+            Bienvenido 👋
+          </h2>
+        </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          
+          <div
+            style={{
+              background: '#f3f4f6',
+              padding: '10px 14px',
+              borderRadius: 8,
+              fontSize: 14,
+              fontWeight: 600,
+              color: '#111827',
+              textAlign: 'center'
+            }}
+          >
+            🔐 Ingrese los últimos 4 dígitos de su cédula
+          </div>
 
           <input
-            type="password"
+            type="text"
             maxLength={4}
-            placeholder="Últimos 4 dígitos"
+            inputMode="numeric"
+            placeholder="0000"
             value={ultimos4}
-            onChange={(e) => setUltimos4(e.target.value)}
-            style={{ width: '100%' }}
+            onChange={(e) => {
+              const value = e.target.value.replace(/\D/g, '')
+              setUltimos4(value)
+            }}
+            style={{
+              width: '100%',
+              padding: '14px 12px',
+              borderRadius: 12,
+              border: ultimos4.length === 4
+                ? '2px solid #16a34a'
+                : '2px solid #e5e7eb',
+              fontSize: 22,
+              textAlign: 'center',
+              letterSpacing: 8,
+              fontWeight: 600,
+              outline: 'none',
+              backgroundColor: '#f9fafb',
+              transition: 'all 0.25s ease',
+              boxShadow: ultimos4.length === 4
+                ? '0 0 0 3px rgba(22,163,74,0.15)'
+                : '0 4px 10px rgba(0,0,0,0.04)'
+            }}
           />
 
           <button
