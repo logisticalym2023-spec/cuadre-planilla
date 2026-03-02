@@ -85,6 +85,7 @@ export default function ResumenPage() {
     Number(planilla.acompanamiento || 0) +
     Number(planilla.gasto_oficina || 0) +
     Number(planilla.descuento_clientes || 0) +
+    Number(planilla.almuerzo || 0) +
     vale
 
   const diferencia = totalLegalizado - planillaAjustada
@@ -165,6 +166,7 @@ export default function ResumenPage() {
         <p>Acompañamiento: {formatCOP(planilla.acompanamiento)}</p>
         <p>Gasto Oficina: {formatCOP(planilla.gasto_oficina)}</p>
         <p>Descuento Clientes: {formatCOP(planilla.descuento_clientes)}</p>
+        <p>Almuerzo: {formatCOP(planilla.almuerzo)}</p>
         <p>Vale: {formatCOP(planilla.vale)}</p>
 
         <hr />
