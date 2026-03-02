@@ -39,7 +39,7 @@ export default function CuadrePage() {
     const { data, error } = await supabase
       .from('planillas_oficiales')
       .select('valor')
-      .eq('fecha', fecha) // importante: formato YYYY-MM-DD
+      .eq('fecha', fecha)
       .eq('planilla_no', numero)
       .single()
 
@@ -63,11 +63,14 @@ export default function CuadrePage() {
       .insert([
         {
           personal_id: user.id,
+          usuario_ultimos4: user.ultimos_4, // 🔥 NUEVO CAMPO PARA AUDITORÍA
+
           empresa,
           fecha,
           vehiculo: Number(vehiculo),
           planilla_no: planillaNo,
           planilla_valor: planillaValor,
+
           agotado: 0,
           consignacion_brinks: 0,
           consignacion_banco: 0,
@@ -124,7 +127,7 @@ export default function CuadrePage() {
               value={fecha}
               onChange={(e) => {
                 setFecha(e.target.value)
-                setPlanillaValor(0) // reset si cambia fecha
+                setPlanillaValor(0)
               }}
               style={{ width: '100%', marginTop: 6 }}
             />
@@ -175,7 +178,7 @@ export default function CuadrePage() {
                 type="text"
                 inputMode="numeric"
                 value={planillaValor === 0 ? '' : formatVisual(planillaValor)}
-                readOnly // 🔥 ahora es automático
+                readOnly
                 style={{
                   width: '100%',
                   paddingLeft: 28,

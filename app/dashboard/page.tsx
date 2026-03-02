@@ -75,33 +75,96 @@ export default function DashboardPage() {
   /* EXPORTACIONES (SIN CAMBIOS) */
 
   const exportarPlanillasCerradas = async () => {
-    const cerradas = planillas.filter(p => p.cerrado)
+  const cerradas = planillas.filter(p => p.cerrado)
 
-    if (cerradas.length === 0) {
-      alert('No hay planillas cerradas para exportar')
-      return
-    }
-
-    const data = cerradas.map(p => ({
-      Empresa: p.empresa,
-      Fecha: p.fecha,
-      Planilla: p.planilla_no,
-      Valor: p.planilla_valor,
-      Diferencia: p.diferencia_cierre,
-      Usuario: p.personal_autorizado?.nombre
-    }))
-
-    const worksheet = XLSX.utils.json_to_sheet(data)
-    const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Cerradas')
-
-    const buffer = XLSX.write(workbook, {
-      bookType: 'xlsx',
-      type: 'array'
-    })
-
-    descargarArchivo(buffer, 'Planillas_Cerradas.xlsx')
+  if (cerradas.length === 0) {
+    alert('No hay planillas cerradas para exportar')
+    return
   }
+
+  const dataFinal: any[] = []
+
+  for (const p of cerradas) {
+
+    const { data: billetes } = await supabase
+      .from('cuadre_billetes')
+      .select('total')
+      .eq('cuadre_id', p.id)
+
+    const { data: monedas } = await supabase
+      .from('cuadre_monedas')
+      .select('total')
+      .eq('cuadre_id', p.id)
+
+    const totalBilletes = (billetes || []).reduce(
+      (acc, item) => acc + Number(item.total), 0
+    )
+
+    const totalMonedas = (monedas || []).reduce(
+      (acc, item) => acc + Number(item.total), 0
+    )
+
+    const totalEfectivo = totalBilletes + totalMonedas
+
+    const planillaValor = Number(p.planilla_valor || 0)
+    const agotado = Number(p.agotado || 0)
+
+    const planillaAjustada =
+      agotado > planillaValor ? 0 : planillaValor - agotado
+
+    const totalLegalizado =
+      totalEfectivo +
+      Number(p.dev_paseo || 0) +
+      Number(p.dev_mala || 0) +
+      Number(p.consignacion_brinks || 0) +
+      Number(p.consignacion_banco || 0) +
+      Number(p.redespacho_manana || 0) +
+      Number(p.peajes || 0) +
+      Number(p.combustible || 0) +
+      Number(p.fletes || 0) +
+      Number(p.acompanamiento || 0) +
+      Number(p.gasto_oficina || 0) +
+      Number(p.descuento_clientes || 0) +
+      Number(p.vale || 0)
+
+    dataFinal.push({
+      "Codigo Usuario": p.usuario_ultimos4,
+      "Planilla No": p.planilla_no,
+      "Empresa": p.empresa,
+      "Vehículo": p.vehiculo,
+      "Fecha": p.fecha,
+      "Valor Planilla": planillaValor,
+      "Agotado": agotado,
+      "Planilla Ajustada": planillaAjustada,
+      "Total Efectivo": totalEfectivo,
+      "Dev Buena": Number(p.dev_paseo || 0),
+      "Dev Mala": Number(p.dev_mala || 0),
+      "Consignación Brinks": Number(p.consignacion_brinks || 0),
+      "Consignación Banco": Number(p.consignacion_banco || 0),
+      "Redespacho Mañana": Number(p.redespacho_manana || 0),
+      "Peajes": Number(p.peajes || 0),
+      "Combustible": Number(p.combustible || 0),
+      "Fletes": Number(p.fletes || 0),
+      "Acompañamiento": Number(p.acompanamiento || 0),
+      "Gasto Oficina": Number(p.gasto_oficina || 0),
+      "Descuento Clientes": Number(p.descuento_clientes || 0),
+      "Vale": Number(p.vale || 0),
+      "TOTAL LEGALIZADO": totalLegalizado,
+      "DIFERENCIA": Number(p.diferencia_cierre || 0)
+    })
+  }
+
+  const worksheet = XLSX.utils.json_to_sheet(dataFinal)
+  const workbook = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Consolidado')
+
+  const buffer = XLSX.write(workbook, {
+    bookType: 'xlsx',
+    type: 'array'
+  })
+
+  descargarArchivo(buffer, 'Consolidado_Planillas_Cerradas.xlsx')
+}
 
   const exportarPlanillaIndividual = async (planillaId: string) => {
     const { data: planilla } = await supabase
