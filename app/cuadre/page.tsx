@@ -32,7 +32,6 @@ export default function CuadrePage() {
     setLoading(false)
   }, [])
 
-  // 🔥 NUEVA FUNCIÓN: Buscar planilla oficial
   const buscarPlanillaOficial = async (numero: string) => {
     if (!numero || !fecha) return
 
@@ -63,7 +62,7 @@ export default function CuadrePage() {
       .insert([
         {
           personal_id: user.id,
-          usuario_ultimos4: user.ultimos_4, // 🔥 NUEVO CAMPO PARA AUDITORÍA
+          usuario_ultimos4: user.ultimos_4,
 
           empresa,
           fecha,
@@ -90,6 +89,7 @@ export default function CuadrePage() {
       return
     }
 
+    // 🔥 CORRECCIÓN AQUÍ
     router.push(`/cuadre/${data.id}`)
   }
 
@@ -117,6 +117,7 @@ export default function CuadrePage() {
               <option value="">Seleccione empresa</option>
               <option value="C_Nutresa">C_Nutresa</option>
               <option value="Nutrefrio">Nutrefrio</option>
+              <option value="Alpina_B">Alpina_B</option>
             </select>
           </div>
 
@@ -141,7 +142,7 @@ export default function CuadrePage() {
               style={{ width: '100%', marginTop: 6 }}
             >
               <option value="">Seleccione vehículo</option>
-              {[1,2,3,4,5,6,7,8,9].map((n) => (
+              {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30].map((n) => (
                 <option key={n} value={n}>{n}</option>
               ))}
             </select>
